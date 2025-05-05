@@ -472,25 +472,86 @@ def generate_html_page(items):
     </nav>
 
     <div class="container mt-4">
-        <div class="alert alert-info">
-            <i class="fas fa-info-circle"></i> Found """ + str(len(items)) + """ items. Use filters below to narrow results.
-        </div>
-        
-        <div class="filter-bar">
-            <div class="row g-3">
-                <div class="col-md-4">
+    <div class="alert alert-info">
+        <i class="fas fa-info-circle"></i> Found <span id="resultCount">1198</span> items. Use filters below to narrow results.
+    </div>
+    
+    <div class="filter-bar">
+        <div class="row g-3">
+            <div class="col-md-4">
+                <div class="input-group">
                     <input type="text" class="form-control" id="searchInput" placeholder="Search titles...">
+                    <button class="btn btn-primary" type="button" id="searchButton">
+                        <i class="fas fa-search"></i> Search
+                    </button>
                 </div>
-                <div class="col-md-2">
-                    <select class="form-select" id="contentTypeFilter">
-                        <option value="">All Types</option>
-                        <option value="tv">TV Shows</option>
-                        <option value="movie">Movies</option>
-                    </select>
-                </div>
-                <div class="col-md-2">
-                    <select class="form-select" id="categoryFilter">
-                        <option value="">All Categories</option>
+            </div>
+            <div class="col-md-2">
+                <select class="form-select" id="contentTypeFilter">
+                    <option value="">All Types</option>
+                    <option value="tv">TV Shows</option>
+                    <option value="movie">Movies</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select class="form-select" id="categoryFilter">
+                    <option value="">All Categories</option>
+                    <!-- Categories added dynamically -->
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select class="form-select" id="qualityFilter">
+                    <option value="">All Qualities</option>
+                    <option value="1080p">1080p</option>
+                    <option value="720p">720p</option>
+                    <option value="480p">480p</option>
+                    <option value="4K">4K/UHD</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select class="form-select" id="languageFilter">
+                    <option value="">All Languages</option>
+                    <option value="TAM">Tamil</option>
+                    <option value="TEL">Telugu</option>
+                    <option value="HIN">Hindi</option>
+                    <option value="KAN">Kannada</option>
+                    <option value="MAL">Malayalam</option>
+                    <option value="ENG">English</option>
+                    <option value="JAP">Japanese</option>
+                </select>
+            </div>
+        </div>
+        <div class="row mt-3">
+            <div class="col-md-4">
+                <input type="text" class="form-control" id="showNameInput" placeholder="TV Show name (e.g., Office)">
+            </div>
+            <div class="col-md-2">
+                <select class="form-select" id="seasonFilter">
+                    <option value="">All Seasons</option>
+                    <option value="S01">Season 1</option>
+                    <option value="S02">Season 2</option>
+                    <option value="S03">Season 3</option>
+                    <option value="S04">Season 4</option>
+                    <option value="S05">Season 5</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <input type="text" class="form-control" id="episodeFilter" placeholder="Episode (e.g., EP01)">
+            </div>
+            <div class="col-md-2">
+                <input type="text" class="form-control" id="yearFilter" placeholder="Year (e.g., 2025)">
+            </div>
+            <div class="col-md-2">
+                <select class="form-select" id="sortOrder">
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="az">A-Z</option>
+                    <option value="za">Z-A</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
 """
 
     # Add categories dynamically
@@ -576,61 +637,105 @@ def generate_html_page(items):
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        function copyToClipboard(text, button) {
-            navigator.clipboard.writeText(text).then(() => {
-                const originalText = button.innerHTML;
-                button.innerHTML = '<i class="fas fa-check me-1"></i> Copied!';
-                button.classList.add('btn-success');
-                button.classList.remove('btn-magnet');
-                setTimeout(() => {
-                    button.innerHTML = originalText;
-                    button.classList.add('btn-magnet');
-                    button.classList.remove('btn-success');
-                }, 2000);
-            });
-        }
-
-        document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('searchInput').addEventListener('input', filterItems);
-            document.getElementById('contentTypeFilter').addEventListener('change', filterItems);
-            document.getElementById('categoryFilter').addEventListener('change', filterItems);
-            document.getElementById('qualityFilter').addEventListener('change', filterItems);
-            document.getElementById('languageFilter').addEventListener('change', filterItems);
-            document.getElementById('showNameInput').addEventListener('input', filterItems);
-            document.getElementById('seasonFilter').addEventListener('change', filterItems);
-            document.getElementById('episodeFilter').addEventListener('input', filterItems);
-            document.getElementById('yearFilter').addEventListener('input', filterItems);
-            document.getElementById('sortOrder').addEventListener('change', sortItems);
-            
-            // Initial sort
-            sortItems();
+<script>
+    // Function to copy magnet link to clipboard
+    function copyToClipboard(text, button) {
+        navigator.clipboard.writeText(text).then(() => {
+            const originalText = button.innerHTML;
+            button.innerHTML = '<i class="fas fa-check me-1"></i> Copied!';
+            button.classList.add('btn-success');
+            button.classList.remove('btn-magnet');
+            setTimeout(() => {
+                button.innerHTML = originalText;
+                button.classList.add('btn-magnet');
+                button.classList.remove('btn-success');
+            }, 2000);
         });
+    }
 
-        function filterItems() {
-            const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-            const contentType = document.getElementById('contentTypeFilter').value;
-            const categoryFilter = document.getElementById('categoryFilter').value;
-            const qualityFilter = document.getElementById('qualityFilter').value.toLowerCase();
-            const languageFilter = document.getElementById('languageFilter').value;
-            const showName = document.getElementById('showNameInput').value.toLowerCase();
-            const seasonFilter = document.getElementById('seasonFilter').value;
-            const episodeFilter = document.getElementById('episodeFilter').value.toLowerCase();
-            const yearFilter = document.getElementById('yearFilter').value;
-            
-            document.querySelectorAll('.magnet-item').forEach(item => {
-                const title = item.getAttribute('data-title');
-                const originalTitle = item.getAttribute('data-original-title');
-                const category = item.getAttribute('data-category');
-                const languages = item.getAttribute('data-languages').split(',');
-                const qualities = item.getAttribute('data-qualities').split(',');
-                const isTvShow = item.getAttribute('data-tv-show') === 'true';
-                const showNameAttr = item.getAttribute('data-show-name').toLowerCase();
-                const season = item.getAttribute('data-season');
-                const episode = item.getAttribute('data-episode').toLowerCase();
-                const year = item.getAttribute('data-year');
+    // Wait for the DOM to be fully loaded
+    document.addEventListener('DOMContentLoaded', function() {
+        console.log("DOM loaded, initializing filters...");
+        
+        // Initialize event listeners
+        document.getElementById('searchInput').addEventListener('input', debounce(filterItems, 300));
+        document.getElementById('searchButton').addEventListener('click', function() {
+            filterItems();
+            const visibleResults = document.querySelectorAll('.magnet-item:not([style*="display: none"])').length;
+            alert(`Found ${visibleResults} results matching your search criteria.`);
+        });
+        
+        // Add Enter key support for search
+        document.getElementById('searchInput').addEventListener('keyup', function(event) {
+            if (event.key === "Enter") {
+                document.getElementById('searchButton').click();
+            }
+        });
+        
+        // Add other filter event listeners
+        document.getElementById('contentTypeFilter').addEventListener('change', filterItems);
+        document.getElementById('categoryFilter').addEventListener('change', filterItems);
+        document.getElementById('qualityFilter').addEventListener('change', filterItems);
+        document.getElementById('languageFilter').addEventListener('change', filterItems);
+        document.getElementById('showNameInput').addEventListener('input', debounce(filterItems, 300));
+        document.getElementById('seasonFilter').addEventListener('change', filterItems);
+        document.getElementById('episodeFilter').addEventListener('input', debounce(filterItems, 300));
+        document.getElementById('yearFilter').addEventListener('input', debounce(filterItems, 300));
+        document.getElementById('sortOrder').addEventListener('change', sortItems);
+        
+        // Initial filter and sort
+        filterItems();
+        sortItems();
+        
+        console.log("Filters initialized");
+    });
+
+    // Debounce function to limit how often a function is called
+    function debounce(func, wait) {
+        let timeout;
+        return function() {
+            const context = this;
+            const args = arguments;
+            clearTimeout(timeout);
+            timeout = setTimeout(() => {
+                func.apply(context, args);
+            }, wait);
+        };
+    }
+
+    // Main filtering function
+    function filterItems() {
+        console.log("Filtering items...");
+        const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+        const contentType = document.getElementById('contentTypeFilter').value;
+        const categoryFilter = document.getElementById('categoryFilter').value;
+        const qualityFilter = document.getElementById('qualityFilter').value.toLowerCase();
+        const languageFilter = document.getElementById('languageFilter').value;
+        const showName = document.getElementById('showNameInput').value.toLowerCase();
+        const seasonFilter = document.getElementById('seasonFilter').value;
+        const episodeFilter = document.getElementById('episodeFilter').value.toLowerCase();
+        const yearFilter = document.getElementById('yearFilter').value;
+        
+        console.log("Search term:", searchTerm);
+        
+        let visibleCount = 0;
+        
+        // Loop through all items and filter them
+        document.querySelectorAll('.magnet-item').forEach(item => {
+            try {
+                const title = (item.getAttribute('data-title') || "").toLowerCase();
+                const originalTitle = (item.getAttribute('data-original-title') || "").toLowerCase();
+                const category = item.getAttribute('data-category') || "";
+                const languages = (item.getAttribute('data-languages') || "").split(',');
+                const qualities = (item.getAttribute('data-qualities') || "").split(',');
+                const isTvShow = (item.getAttribute('data-tv-show') || "false") === 'true';
+                const showNameAttr = (item.getAttribute('data-show-name') || "").toLowerCase();
+                const season = item.getAttribute('data-season') || "";
+                const episode = (item.getAttribute('data-episode') || "").toLowerCase();
+                const year = item.getAttribute('data-year') || "";
                 
-                const titleMatch = title.includes(searchTerm) || originalTitle.includes(searchTerm);
+                // Check if item matches all filters
+                const titleMatch = !searchTerm || title.includes(searchTerm) || originalTitle.includes(searchTerm);
                 const contentTypeMatch = !contentType || 
                     (contentType === 'tv' && isTvShow) || 
                     (contentType === 'movie' && !isTvShow);
@@ -642,50 +747,67 @@ def generate_html_page(items):
                 const episodeMatch = !episodeFilter || episode.includes(episodeFilter);
                 const yearMatch = !yearFilter || year.includes(yearFilter);
                 
+                // Show or hide the item based on filter matches
                 if (titleMatch && contentTypeMatch && categoryMatch && qualityMatch && 
                     languageMatch && showNameMatch && seasonMatch && episodeMatch && yearMatch) {
                     item.style.display = '';
+                    visibleCount++;
                 } else {
                     item.style.display = 'none';
                 }
-            });
-        }
+            } catch (error) {
+                console.error("Error filtering item:", error);
+                item.style.display = ''; // Show item on error
+            }
+        });
+        
+        // Update the count display
+        document.getElementById('resultCount').textContent = visibleCount;
+        console.log(`Filtering complete. Showing ${visibleCount} items.`);
+    }
 
-        function sortItems() {
-            const container = document.getElementById('magnetCards');
-            const sortOrder = document.getElementById('sortOrder').value;
-            const items = Array.from(container.getElementsByClassName('magnet-item'));
+    // Sorting function
+    function sortItems() {
+        console.log("Sorting items...");
+        const container = document.getElementById('magnetCards');
+        const sortOrder = document.getElementById('sortOrder').value;
+        const items = Array.from(container.getElementsByClassName('magnet-item'));
+        
+        items.sort(function(a, b) {
+            const aTitle = (a.getAttribute('data-title') || "").toLowerCase();
+            const bTitle = (b.getAttribute('data-title') || "").toLowerCase(); 
+            const aDate = a.getAttribute('data-added') || '2000-01-01';
+            const bDate = b.getAttribute('data-added') || '2000-01-01';
             
-            items.sort(function(a, b) {
-                const aTitle = a.getAttribute('data-title');
-                const bTitle = b.getAttribute('data-title');
-                const aDate = a.getAttribute('data-added') || '2000-01-01';
-                const bDate = b.getAttribute('data-added') || '2000-01-01';
-                
-                switch(sortOrder) {
-                    case 'newest':
-                        return bDate.localeCompare(aDate);
-                    case 'oldest':
-                        return aDate.localeCompare(bDate);
-                    case 'az':
-                        return aTitle.localeCompare(bTitle);
-                    case 'za':
-                        return bTitle.localeCompare(aTitle);
-                }
-            });
-            
-            items.forEach(item => container.appendChild(item));
-        }
-    </script>
+            switch(sortOrder) {
+                case 'newest':
+                    return bDate.localeCompare(aDate);
+                case 'oldest':
+                    return aDate.localeCompare(bDate);
+                case 'az':
+                    return aTitle.localeCompare(bTitle);
+                case 'za':
+                    return bTitle.localeCompare(aTitle);
+                default:
+                    return 0;
+            }
+        });
+        
+        // Reappend sorted items to the container
+        items.forEach(item => container.appendChild(item));
+        console.log("Sorting complete");
+    }
+</script>
+
 </body>
 </html>
 """
     return html
 
-def generate_item_card(item, html):
+def generate_item_card(item):
     """Generate HTML for a single item card"""
     title = item['title']
-    clean_title = item.get('clean_title', title)
+    clean_title = item.get('clean_title', title) 
     magnet = item['magnet']
     category = item.get('category', "Uncategorized")
     img_src = item.get('image', "")
@@ -697,6 +819,20 @@ def generate_item_card(item, html):
     show_name = item.get('show_name', "")
     season = item.get('season', "")
     episode = item.get('episode', "")
+    
+    # Create data attributes string with proper escaping
+    data_attrs = f'''
+        data-category="{category}"
+        data-title="{clean_title.lower().replace('"', '&quot;')}" 
+        data-original-title="{title.lower().replace('"', '&quot;')}"
+        data-year="{release_date}"
+        data-added="{added_date}"
+        data-languages="{','.join(languages)}"
+        data-qualities="{','.join(qualities)}"
+        data-tv-show="{str(is_tv_show).lower()}"
+        data-show-name="{show_name.replace('"', '&quot;')}"
+        data-season="{season}"
+        data-episode="{episode}"
     
     # Create badges for quality markers
     quality_badges = ""
@@ -720,17 +856,20 @@ def generate_item_card(item, html):
     
     return """
         <div class="col-md-3 magnet-item" 
-            data-category="{category}" 
-            data-title="{clean_title_lower}" 
-            data-original-title="{title_lower}"
-            data-year="{release_date}"
-            data-added="{added_date}"
-            data-languages="{languages_str}"
-            data-qualities="{qualities_str}"
-            data-tv-show="{is_tv_show}"
-            data-show-name="{show_name}"
-            data-season="{season}"
-            data-episode="{episode}">
+    data-category="Category Name"
+    data-title="clean title text" 
+    data-original-title="original title text"
+    data-year="2025"
+    data-added="2025-05-05 08:46:12"
+    data-languages="TAM,ENG"
+    data-qualities="1080p,4K"
+    data-tv-show="true"
+    data-show-name="Show Name"
+    data-season="S01"
+    data-episode="EP01">
+    <!-- Card content -->
+</div>
+
             <div class="card h-100">
                 <div class="card-img-top-container">
                     {image_html}
