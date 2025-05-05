@@ -1,4 +1,10 @@
-name: Update Magnet Dashboard
+- name: Run dashboard update script
+  run: |
+    echo "Current directory contents:"
+    ls -la
+    python update_magnets.py
+    echo "Files generated:"
+    ls -la
 
 on:
   schedule:
@@ -28,4 +34,4 @@ jobs:
         with:
           folder: .  # The folder containing the generated index.html
           branch: gh-pages  # The branch the action should deploy to
-          clean: true  # Automatically remove deleted files
+          clean: false  # Automatically remove deleted files
