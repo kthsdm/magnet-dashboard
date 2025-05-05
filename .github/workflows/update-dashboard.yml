@@ -1,0 +1,31 @@
+name: Update Magnet Dashboard
+
+on:
+  schedule:
+    - cron: '0 */12 * * *'  # Run twice a day
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  update-dashboard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.9
+          
+      - name: Install dependencies
+        run: pip install cloudscraper beautifulsoup4 requests
+        
+      - name: Run dashboard update script
+        run: python update_magnets.py
+      
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          folder: .  # The folder containing the generated index.html
+          branch: gh-pages  # The branch the action should deploy to
+          clean: true  # Automatically remove deleted files
