@@ -1,15 +1,13 @@
-- name: Run dashboard update script
-  run: |
-    echo "Current directory contents:"
-    ls -la
-    python update_magnets.py
-    echo "Files generated:"
-    ls -la
+name: Update Magnet Dashboard
 
 on:
   schedule:
     - cron: '0 */12 * * *'  # Run twice a day
   workflow_dispatch:  # Allow manual trigger
+
+permissions:
+  contents: write
+  pages: write
 
 jobs:
   update-dashboard:
@@ -27,11 +25,16 @@ jobs:
         run: pip install cloudscraper beautifulsoup4 requests
         
       - name: Run dashboard update script
-        run: python update_magnets.py
+        run: |
+          echo "Current directory contents:"
+          ls -la
+          python update_magnets.py
+          echo "Files generated:"
+          ls -la
       
       - name: Deploy to GitHub Pages
         uses: JamesIves/github-pages-deploy-action@v4
         with:
           folder: .  # The folder containing the generated index.html
           branch: gh-pages  # The branch the action should deploy to
-          clean: false  # Automatically remove deleted files
+          clean: false  # Don't remove existing files
