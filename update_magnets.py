@@ -59,23 +59,66 @@ def check_domain(url):
 
 # ─── Helper functions for content extraction ────────────────────────────────
 def extract_proper_title(full_title, soup=None, page_url=""):
-    """Enhanced title extraction with fallback methods"""
-    # Remove common channel prefixes
+    """Enhanced title extraction with better UI element filtering"""
+    # Skip known UI elements and site branding
+    ui_elements = [
+        "Sign In", "J.A.R.V.I.S.", "JARVIS", "By J.A.R.V.I.S.", "By Olan",
+        "Login", "Register", "TamilMV Official Telegram Channel",
+        "TamilMV Official", "1TamilMV.com"
+    ]
+    
+    # Check if this is a UI element rather than a content title
+    if any(ui in full_title for ui in ui_elements):
+        # Try to extract the real title from page elements instead
+        if soup:
+            # Look for topic titles in the standard forum layout
+            topic_title = soup.select_one(".ipsType_pagetitle") or soup.select_one(".ipsDataItem_title a")
+            if topic_title and len(topic_title.text.strip()) > 5:
+                return topic_title.text.strip()
+            
+            # Look for page titles with year pattern (very reliable for movies)
+            for element in soup.select("h1, h2, .ipsType_break"):
+                text = element.text.strip()
+                movie_year = re.search(r'([^(]+)\s*\((\d{4})\)', text)
+                if movie_year and len(movie_year.group(1).strip()) > 3:
+                    return movie_year.group(0).strip()
+                    
+            # Try page title (remove site name)
+            if soup.title:
+                title_text = soup.title.text.strip()
+                title_text = re.sub(r'\s*[-|]\s*(?:1TamilMV|TamilMV).*$', '', title_text)
+                if len(title_text) > 5:
+                    return title_text
+        
+        # Extract from URL as last resort
+        if page_url:
+            try:
+                path = urlparse(page_url).path
+                if "topic" in path or "forums" in path:
+                    parts = path.split('-')
+                    if len(parts) > 1:
+                        if parts[0].endswith(('0', '/')):  # Skip ID numbers
+                            parts = parts[1:]
+                        title = ' '.join(parts).replace('-', ' ').title()
+                        if len(title) > 5:
+                            return title
+            except:
+                pass
+                
+        # If we still can't extract a good title
+        return "Unknown Title (See Details)"
+    
+    # For legitimate titles, clean up common prefixes
     common_prefixes = [
         "TamilMV Official Telegram Channel :-",
         "TamilMV Official Telegram Channel:",
-        "TamilMV Official",
         "1TamilMV.com -"
     ]
     
-    # First check if title is just a channel name
     for prefix in common_prefixes:
         if full_title.startswith(prefix):
-            # Check if there's content after the prefix
-            remainder = full_title[len(prefix):].strip()
-            if remainder and len(remainder) > 3:
-                full_title = remainder
-                break
+            full_title = full_title[len(prefix):].strip()
+            break
     
     # Special TV show episode pattern: Office (2025) S01 EP (37-40)
     tv_match = re.search(r'([^(]+)\s*\((\d{4})\)\s+S(\d+)\s+EP\s*\(?(\d+(?:-\d+)?)\)?', full_title, re.IGNORECASE)
