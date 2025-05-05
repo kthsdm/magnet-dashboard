@@ -901,6 +901,40 @@ def generate_item_card(item, html_container):
     html_container += html_content
     return html_container
 
+def remove_duplicates(items):
+    """Remove duplicate entries based on magnet links"""
+    print("Removing duplicate entries...")
+    
+    # Use dictionary to track unique magnet links
+    unique_items = {}
+    duplicate_count = 0
+    
+    for item in items:
+        magnet_link = item['magnet']
+        
+        # If we haven't seen this magnet link before, add it
+        if magnet_link not in unique_items:
+            unique_items[magnet_link] = item
+        else:
+            duplicate_count += 1
+            # If this item has a better title than the existing one, replace it
+            if len(item.get('clean_title', '')) > len(unique_items[magnet_link].get('clean_title', '')):
+                unique_items[magnet_link] = item
+    
+    # Check for similar titles with different magnet links
+    similar_titles = {}
+    for magnet, item in unique_items.items():
+        clean_title = item.get('clean_title', '').lower()
+        if len(clean_title) > 5:
+            title_key = clean_title[:10]  # First 10 chars as key
+            if title_key in similar_titles:
+                similar_titles[title_key].append(magnet)
+            else:
+                similar_titles[title_key] = [magnet]
+    
+    print(f"Removed {duplicate_count} duplicate entries")
+    return list(unique_items.values())
+
 
 # ─── Save data to JSON and HTML ──────────────────────────────────────────────
 def save_data(items):
@@ -915,13 +949,20 @@ def save_data(items):
         f.write(html)
     print(f"Saved HTML dashboard to index.html")
 
+
 # ─── Main function ──────────────────────────────────────────────────────────
 def main():
     print(f"Starting magnet dashboard update at {datetime.datetime.now()}")
     items = fetch_magnets()
-    print(f"\nFound {len(items)} items")
+    print(f"\nFound {len(items)} items with potential duplicates")
+    
+    # Remove duplicates
+    items = remove_duplicates(items)
+    print(f"Remaining unique items after deduplication: {len(items)}")
+    
     save_data(items)
     print("Update completed successfully")
+
 
 if __name__ == "__main__":
     main()
