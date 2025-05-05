@@ -60,6 +60,23 @@ def check_domain(url):
 # ─── Helper functions for content extraction ────────────────────────────────
 def extract_proper_title(full_title, soup=None, page_url=""):
     """Enhanced title extraction with fallback methods"""
+    # Remove common channel prefixes
+    common_prefixes = [
+        "TamilMV Official Telegram Channel :-",
+        "TamilMV Official Telegram Channel:",
+        "TamilMV Official",
+        "1TamilMV.com -"
+    ]
+    
+    # First check if title is just a channel name
+    for prefix in common_prefixes:
+        if full_title.startswith(prefix):
+            # Check if there's content after the prefix
+            remainder = full_title[len(prefix):].strip()
+            if remainder and len(remainder) > 3:
+                full_title = remainder
+                break
+    
     # Special TV show episode pattern: Office (2025) S01 EP (37-40)
     tv_match = re.search(r'([^(]+)\s*\((\d{4})\)\s+S(\d+)\s+EP\s*\(?(\d+(?:-\d+)?)\)?', full_title, re.IGNORECASE)
     if tv_match:
@@ -68,47 +85,36 @@ def extract_proper_title(full_title, soup=None, page_url=""):
         season = tv_match.group(3)
         episode = tv_match.group(4)
         return f"{show_name} (S{season}E{episode})"
-        
-    # First check if it's just technical specs with no title
-    if (full_title.startswith('[') and ']' in full_title) or full_title.startswith('('):
-        # If we have the page HTML, try to extract from there
-        if soup:
-            # Try page heading or title first
-            heading = soup.find('h1') or soup.find('h2')
-            if heading and ":" in heading.text:
-                parts = heading.text.split(":", 1)
-                if len(parts[0]) > 3:  # Skip very short first parts
-                    return parts[0].strip()
-                
-            # Try page title
-            page_title = soup.find('title')
-            if page_title:
-                title_parts = page_title.text.split(" - ", 1)
-                if len(title_parts) > 1 and len(title_parts[0]) > 3:
-                    return title_parts[0].strip()
-                    
-        # Try to extract from URL if provided
-        if page_url:
-            try:
-                path = urlparse(page_url).path
-                topic_id = path.split('-')[0].split('/')[-1]
-                if topic_id.isdigit():
-                    # URL format usually has the movie name before the ID
-                    parts = path.split('/')[-1].split('-')
-                    if len(parts) > 1:
-                        possible_title = ' '.join(parts[1:]).replace('-', ' ')
-                        if len(possible_title) > 5:  # Reasonable title length
-                            return possible_title.capitalize()
-            except:
-                pass
-                
-        # If we still don't have a title, try to extract from the technical specs
-        if "[" in full_title and "]" in full_title:
-            # Take everything before the first bracket as potential title
-            title_part = full_title.split("[")[0].strip()
-            if title_part and len(title_part) > 3:
-                return title_part
-                
+    
+    # Handle movie titles with year in parentheses - very common pattern
+    movie_year_match = re.search(r'([^(]+)\s*\((\d{4})\)', full_title)
+    if movie_year_match:
+        movie_name = movie_year_match.group(1).strip()
+        year = movie_year_match.group(2)
+        if len(movie_name) > 3:  # Reasonable movie name length
+            return f"{movie_name} ({year})"
+    
+    # Check if there's a title in the page HTML
+    if soup:
+        # Try page heading or title
+        heading = soup.find('h1') or soup.find('h2')
+        if heading:
+            heading_text = heading.text.strip()
+            # Look for movie name with year pattern
+            movie_year = re.search(r'([^(]+)\s*\((\d{4})\)', heading_text)
+            if movie_year:
+                return movie_year.group(0)
+            
+        # Try meta title tag
+        page_title = soup.find('title')
+        if page_title:
+            title_text = page_title.text.strip()
+            # Remove site name
+            title_text = re.sub(r'\s*[-|]\s*1TamilMV.*$', '', title_text)
+            title_text = re.sub(r'\s*[-|]\s*TamilMV.*$', '', title_text)
+            if len(title_text) > 5:
+                return title_text
+    
     # Regular removal of technical specs
     patterns = [
         r'\[\d+p.*?\]',  # [1080p & 720p...]
@@ -127,11 +133,33 @@ def extract_proper_title(full_title, soup=None, page_url=""):
     for pattern in patterns:
         title = re.sub(pattern, '', title).strip()
     
-    # If title became empty or too short, use the original
-    if not title or len(title) < 10:
+    # If title is empty or still looks like a channel name
+    if not title or len(title) < 5 or title in common_prefixes:
+        # Try to extract from URL if provided
+        if page_url:
+            try:
+                path = urlparse(page_url).path
+                # Extract the topic title from URL
+                parts = path.split('/')[-1].split('-')
+                if len(parts) > 1:
+                    # Skip numeric ID at beginning
+                    if parts[0].isdigit():
+                        parts = parts[1:]
+                    possible_title = ' '.join(parts).replace('-', ' ')
+                    if len(possible_title) > 5:
+                        return possible_title.capitalize()
+            except:
+                pass
+        
+        # If we got here and title is still a channel name, use a placeholder
+        if any(prefix in title for prefix in common_prefixes):
+            return "Movie Title (See Details)"
+        
+        # Last resort: use original title
         return full_title
         
     return title
+
 
 def find_better_image(soup, title, dom):
     """Find a better image for the content"""
